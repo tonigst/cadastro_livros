@@ -1,0 +1,6 @@
+@CadastroLivros_HostAddress = http://localhost:5163
+
+GET {{CadastroLivros_HostAddress}}/Main/pingtest
+Accept: application/json
+
+###

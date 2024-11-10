@@ -1,0 +1,12 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/backend/.vs
+/backend/CadastroLivros/bin
+/backend/CadastroLivros/obj
+/backend/CadastroLivros/*.user
+/backend/CadastroLivros.Test/bin
+/backend/CadastroLivros.Test/obj
+/backend/CadastroLivros.Test/*.user
+
