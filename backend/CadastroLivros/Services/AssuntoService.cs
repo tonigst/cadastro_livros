@@ -13,7 +13,7 @@ namespace CadastroLivros.Service
             _assuntoPersistence = assuntoPersistence;
         }
 
-        public async Task<AssuntoDTO?> Read(int codAs)
+        public async Task<AssuntoDTO?> Read(long codAs)
         {
             throw new NotImplementedException();
         }
@@ -28,7 +28,7 @@ namespace CadastroLivros.Service
             throw new NotImplementedException();
         }
 
-        public async Task Delete(int codAs)
+        public async Task Delete(long codAs)
         {
             throw new NotImplementedException();
         }

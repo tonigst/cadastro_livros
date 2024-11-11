@@ -16,7 +16,7 @@ namespace CadastroLivros.Data.Persistence
             _basicPersistence = basicPersistence;
         }
 
-        public async Task<FormaCompra?> Read(int codFC)
+        public async Task<FormaCompra?> Read(long codFC)
         {
             FormaCompra? formaCompra = null;
 
@@ -37,9 +37,18 @@ namespace CadastroLivros.Data.Persistence
             return formaCompra;
         }
 
+        public async Task<bool> Exists(long codFC)
+        {
+            var result = await _basicPersistence.ExecuteScalarAsync<long?>(
+            "SELECT Count(CodFC) FROM FormaCompra WHERE CodFC = $CodFC",
+            ("$CodFC", codFC));
+
+            return result == 1;
+        }
+
         public async Task<FormaCompra> Insert(FormaCompra formaCompra)
         {
-            var newId = await _basicPersistence.ExecuteScalarAsync<int?>(
+            var newId = await _basicPersistence.ExecuteScalarAsync<long?>(
                 @"INSERT INTO FormaCompra (Descricao) VALUES ($Descricao); 
                 SELECT last_insert_rowid();",
                 ("$Descricao", formaCompra.Descricao)
@@ -63,7 +72,7 @@ namespace CadastroLivros.Data.Persistence
             return result == 1;
         }
 
-        public async Task<bool> Delete(int codFC)
+        public async Task<bool> Delete(long codFC)
         {
             var result = await _basicPersistence.ExecuteNonQueryAsync(
                 "DELETE FROM FormaCompra WHERE CodFC = $CodFC",

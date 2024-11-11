@@ -9,5 +9,7 @@ namespace CadastroLivros.Exceptions
         public CadastroLivrosException() { }
 
         public CadastroLivrosException(string message) : base(message) { }
+
+        public CadastroLivrosException(string message, Exception? innerException) : base(message, innerException) { }
     }
 }

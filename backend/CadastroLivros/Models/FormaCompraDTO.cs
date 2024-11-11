@@ -2,7 +2,7 @@
 {
     public class FormaCompraDTO
     {
-        public int CodFC { get; set; }
-        public string Descricao { get; set; }
+        public long? CodFC { get; set; }       // Insert:ignorado    UpdateRelationshipWithLivro: null ou <= 0 cria nova FormaCompra com Descricao
+        public string Descricao { get; set; }  // UpdateRelationshipWithLivro: ignorado se CodFC >= 1 
     }
 }

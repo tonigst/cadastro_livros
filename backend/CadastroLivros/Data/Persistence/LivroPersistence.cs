@@ -15,7 +15,7 @@ namespace CadastroLivros.Data.Persistence
             _basicPersistence = basicPersistence;
         }
 
-        public async Task<Livro?> Read(int codL)
+        public async Task<Livro?> Read(long codL)
         {
             Livro? livro = null;
 
@@ -39,9 +39,18 @@ namespace CadastroLivros.Data.Persistence
             return livro;
         }
 
+        public async Task<bool> Exists(long codL)
+        {
+            var result = await _basicPersistence.ExecuteScalarAsync<long?>(
+            "SELECT Count(CodL) FROM Livro WHERE CodL = $CodL",
+            ("$CodL", codL));
+
+            return result == 1;
+        }
+
         public async Task<Livro> Insert(Livro livro) 
         {
-            var newId = await _basicPersistence.ExecuteScalarAsync<int?>(
+            var newId = await _basicPersistence.ExecuteScalarAsync<long?>(
                 @"INSERT INTO Livro (Titulo, Editora, Edicao, AnoPublicacao) 
                 VALUES ($Titulo, $Editora, $Edicao, $AnoPublicacao); 
                 SELECT last_insert_rowid();",
@@ -72,7 +81,7 @@ namespace CadastroLivros.Data.Persistence
             return result == 1;
         }
 
-        public async Task<bool> Delete(int codL)
+        public async Task<bool> Delete(long codL)
         {
             var result = await _basicPersistence.ExecuteNonQueryAsync(
                 "DELETE FROM Livro WHERE CodL = $CodL",
@@ -125,7 +134,7 @@ namespace CadastroLivros.Data.Persistence
             {
                 list = await ReadListFromDataAdapter(reader);
             },
-            "SELECT CodL, Titulo, Editora, Edicao, AnoPublicacao FROM Livro $Limit OFFSET $Offset",
+            "SELECT CodL, Titulo, Editora, Edicao, AnoPublicacao FROM Livro LIMIT $Limit OFFSET $Offset",
             ("$Limit", limit),
             ("$Offset", offset));
 

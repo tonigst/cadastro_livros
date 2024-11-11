@@ -18,7 +18,7 @@ namespace CadastroLivros.Data.Mapping
         {
             return new Autor()
             {
-                CodAu = autorDTO.CodAu,
+                CodAu = autorDTO.CodAu ?? -1,
                 Nome = autorDTO.Nome,
             };
         }

@@ -2,7 +2,10 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
-/backend/.vs
+.vs
+.vscode
+.vscode/*
+Thumbs.db
 /backend/CadastroLivros/bin
 /backend/CadastroLivros/obj
 /backend/CadastroLivros/*.user
@@ -10,3 +13,5 @@
 /backend/CadastroLivros.Test/obj
 /backend/CadastroLivros.Test/*.user
 
+frontend/node_modules/
+frontend/.angular/

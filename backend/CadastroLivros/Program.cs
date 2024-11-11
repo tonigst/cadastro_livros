@@ -1,6 +1,7 @@
 
 using CadastroLivros.Data.Persistence;
 using CadastroLivros.Data.Persistence.Interfaces;
+using CadastroLivros.Middlewares;
 using CadastroLivros.Service;
 using CadastroLivros.Services.Interfaces;
 
@@ -21,6 +22,13 @@ namespace CadastroLivros
 
             SetupServices(builder);
 
+
+            builder.Services.AddCors(options => options.AddPolicy("AllowAll", builder =>
+            {
+                builder.AllowAnyMethod().AllowAnyHeader().AllowAnyOrigin();
+            }));
+
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -30,6 +38,7 @@ namespace CadastroLivros
                 app.UseSwaggerUI();
             }
 
+            app.UseMiddleware<ErrorHandlerMiddleware>();
             app.UseHttpsRedirection();
 
             app.UseAuthorization();
@@ -48,6 +57,8 @@ namespace CadastroLivros
             builder.Services.AddScoped<ILivroPersistence, LivroPersistence>();
             builder.Services.AddScoped<IAutorPersistence, AutorPersistence>();
             builder.Services.AddScoped<IAssuntoPersistence, AssuntoPersistence>();
+            builder.Services.AddScoped<IPrecoPersistence, PrecoPersistence>();
+            builder.Services.AddScoped<IFormaCompraPersistence, FormaCompraPersistence>();
 
             builder.Services.AddScoped<ILivroService, LivroService>();
             builder.Services.AddScoped<IAutorService, AutorService>();

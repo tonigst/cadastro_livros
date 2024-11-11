@@ -9,20 +9,24 @@ namespace CadastroLivros.Test.Services
 {
     public class LivroServiceTest
     {
+        private readonly Mock<IBasicPersistence> _basicPersistenceMock;
         private readonly Mock<ILivroPersistence> _livroPersistenceMock;
         private readonly Mock<IAutorPersistence> _autorPersistenceMock;
         private readonly Mock<IAssuntoPersistence> _assuntoPersistenceMock;
+        private readonly Mock<IPrecoPersistence> _precoPersistenceMock;
 
         public LivroServiceTest()
         {
+            _basicPersistenceMock = new Mock<IBasicPersistence>();
             _livroPersistenceMock = new Mock<ILivroPersistence>();
             _autorPersistenceMock = new Mock<IAutorPersistence>();
             _assuntoPersistenceMock = new Mock<IAssuntoPersistence>();
+            _precoPersistenceMock = new Mock<IPrecoPersistence>();
         }
 
         #region Test Objects
 
-        private static Livro CreateValidLivro(int codL = 7)
+        private static Livro CreateValidLivro(long codL = 7)
         {
             return new Livro()
             {
@@ -75,7 +79,7 @@ namespace CadastroLivros.Test.Services
             };
         }
 
-        private static LivroDTO CreateValidLivroDTO(int codL = 7)
+        private static LivroDTO CreateValidLivroDTO(long codL = 7)
         {
             var livroDTO = CreateValidLivroDTO_Without_CodL();
             livroDTO.CodL = codL;
@@ -101,7 +105,7 @@ namespace CadastroLivros.Test.Services
             var assuntoPersistenceMock = new Mock<IAssuntoPersistence>();
             assuntoPersistenceMock.Setup(a => a.ReadListFromLivro(It.IsAny<int>())).ReturnsAsync(expectedAssuntos);
 
-            var livroService = new LivroService(livroPersistenceMock.Object, autorPersistenceMock.Object, assuntoPersistenceMock.Object);
+            var livroService = new LivroService(_basicPersistenceMock.Object, livroPersistenceMock.Object, autorPersistenceMock.Object, assuntoPersistenceMock.Object, _precoPersistenceMock.Object); // TODO: _precoPersistenceMock
 
             // act
             var livroResult = await livroService.Read(It.IsAny<int>());
@@ -137,7 +141,7 @@ namespace CadastroLivros.Test.Services
         public async Task Insert_Null_LivroDTO_Must_Throw_CadastroLivrosBadRequestException()
         {
             // arrange
-            var livroService = new LivroService(_livroPersistenceMock.Object, _autorPersistenceMock.Object, _assuntoPersistenceMock.Object);
+            var livroService = new LivroService(_basicPersistenceMock.Object, _livroPersistenceMock.Object, _autorPersistenceMock.Object, _assuntoPersistenceMock.Object, _precoPersistenceMock.Object);
 
             // act
             var act = () => livroService.Insert(null);
@@ -158,12 +162,12 @@ namespace CadastroLivros.Test.Services
             livroPersistenceMock.Setup(a => a.Insert(It.IsAny<Livro>())).ReturnsAsync(CreateValidLivro(expectedCodL));
 
             var autorPersistenceMock = new Mock<IAutorPersistence>();
-            autorPersistenceMock.Setup(a => a.InsertOrUpdateFromLivro(It.IsAny<int>(), It.IsAny<IEnumerable<Autor>>())).ReturnsAsync(autorPersistenceInsertOrUpdateFromLivroResult);
+            autorPersistenceMock.Setup(a => a.UpdateRelationshipWithLivro(It.IsAny<int>(), It.IsAny<IEnumerable<Autor>>())).ReturnsAsync(autorPersistenceInsertOrUpdateFromLivroResult);
 
             var assuntoPersistenceMock = new Mock<IAssuntoPersistence>();
-            assuntoPersistenceMock.Setup(a => a.InsertOrUpdateFromLivro(It.IsAny<int>(), It.IsAny<IEnumerable<Assunto>>())).ReturnsAsync(assuntoPersistenceInsertOrUpdateFromLivroResult);
+            assuntoPersistenceMock.Setup(a => a.UpdateRelationshipWithLivro(It.IsAny<int>(), It.IsAny<IEnumerable<Assunto>>())).ReturnsAsync(assuntoPersistenceInsertOrUpdateFromLivroResult);
 
-            var livroService = new LivroService(livroPersistenceMock.Object, autorPersistenceMock.Object, assuntoPersistenceMock.Object);
+            var livroService = new LivroService(_basicPersistenceMock.Object, livroPersistenceMock.Object, autorPersistenceMock.Object, assuntoPersistenceMock.Object, _precoPersistenceMock.Object);
 
             // act
             var act = () => livroService.Insert(livroDTO);
@@ -196,12 +200,12 @@ namespace CadastroLivros.Test.Services
             livroPersistenceMock.Setup(a => a.Insert(It.IsAny<Livro>())).ReturnsAsync(livro);
 
             var autorPersistenceMock = new Mock<IAutorPersistence>();
-            autorPersistenceMock.Setup(a => a.InsertOrUpdateFromLivro(It.IsAny<int>(), It.IsAny<IEnumerable<Autor>>())).ReturnsAsync(true);
+            autorPersistenceMock.Setup(a => a.UpdateRelationshipWithLivro(It.IsAny<int>(), It.IsAny<IEnumerable<Autor>>())).ReturnsAsync(true);
 
             var assuntoPersistenceMock = new Mock<IAssuntoPersistence>();
-            assuntoPersistenceMock.Setup(a => a.InsertOrUpdateFromLivro(It.IsAny<int>(), It.IsAny<IEnumerable<Assunto>>())).ReturnsAsync(true);
+            assuntoPersistenceMock.Setup(a => a.UpdateRelationshipWithLivro(It.IsAny<int>(), It.IsAny<IEnumerable<Assunto>>())).ReturnsAsync(true);
 
-            var livroService = new LivroService(livroPersistenceMock.Object, autorPersistenceMock.Object, assuntoPersistenceMock.Object);
+            var livroService = new LivroService(_basicPersistenceMock.Object, livroPersistenceMock.Object, autorPersistenceMock.Object, assuntoPersistenceMock.Object, _precoPersistenceMock.Object);
 
             // act
             var livroDTOResult = await livroService.Insert(livroDTO);
@@ -240,7 +244,7 @@ namespace CadastroLivros.Test.Services
         private async Task Update_Invalid_LivroDTO_Must_Throw_CadastroLivrosBadRequestException(LivroDTO livroDTO)
         {
             // arrange
-            var livroService = new LivroService(_livroPersistenceMock.Object, _autorPersistenceMock.Object, _assuntoPersistenceMock.Object);
+            var livroService = new LivroService(_basicPersistenceMock.Object, _livroPersistenceMock.Object, _autorPersistenceMock.Object, _assuntoPersistenceMock.Object, _precoPersistenceMock.Object);
 
             // act
             var act = () => livroService.Update(livroDTO);
@@ -273,12 +277,12 @@ namespace CadastroLivros.Test.Services
             livroPersistenceMock.Setup(a => a.Update(It.IsAny<Livro>())).ReturnsAsync(livroPersistenceUpdateResult);
 
             var autorPersistenceMock = new Mock<IAutorPersistence>();
-            autorPersistenceMock.Setup(a => a.InsertOrUpdateFromLivro(It.IsAny<int>(), It.IsAny<IEnumerable<Autor>>())).ReturnsAsync(autorPersistenceInsertOrUpdateFromLivroResult);
+            autorPersistenceMock.Setup(a => a.UpdateRelationshipWithLivro(It.IsAny<int>(), It.IsAny<IEnumerable<Autor>>())).ReturnsAsync(autorPersistenceInsertOrUpdateFromLivroResult);
 
             var assuntoPersistenceMock = new Mock<IAssuntoPersistence>();
-            assuntoPersistenceMock.Setup(a => a.InsertOrUpdateFromLivro(It.IsAny<int>(), It.IsAny<IEnumerable<Assunto>>())).ReturnsAsync(assuntoPersistenceInsertOrUpdateFromLivroResult);
+            assuntoPersistenceMock.Setup(a => a.UpdateRelationshipWithLivro(It.IsAny<int>(), It.IsAny<IEnumerable<Assunto>>())).ReturnsAsync(assuntoPersistenceInsertOrUpdateFromLivroResult);
 
-            var livroService = new LivroService(livroPersistenceMock.Object, autorPersistenceMock.Object, assuntoPersistenceMock.Object);
+            var livroService = new LivroService(_basicPersistenceMock.Object, livroPersistenceMock.Object, autorPersistenceMock.Object, assuntoPersistenceMock.Object, _precoPersistenceMock.Object);
 
             // act
             var act = () => livroService.Update(livroDTO);
@@ -315,12 +319,12 @@ namespace CadastroLivros.Test.Services
             livroPersistenceMock.Setup(a => a.Update(It.IsAny<Livro>())).ReturnsAsync(true);
 
             var autorPersistenceMock = new Mock<IAutorPersistence>();
-            autorPersistenceMock.Setup(a => a.InsertOrUpdateFromLivro(It.IsAny<int>(), It.IsAny<IEnumerable<Autor>>())).ReturnsAsync(true);
+            autorPersistenceMock.Setup(a => a.UpdateRelationshipWithLivro(It.IsAny<int>(), It.IsAny<IEnumerable<Autor>>())).ReturnsAsync(true);
 
             var assuntoPersistenceMock = new Mock<IAssuntoPersistence>();
-            assuntoPersistenceMock.Setup(a => a.InsertOrUpdateFromLivro(It.IsAny<int>(), It.IsAny<IEnumerable<Assunto>>())).ReturnsAsync(true);
+            assuntoPersistenceMock.Setup(a => a.UpdateRelationshipWithLivro(It.IsAny<int>(), It.IsAny<IEnumerable<Assunto>>())).ReturnsAsync(true);
 
-            var livroService = new LivroService(livroPersistenceMock.Object, autorPersistenceMock.Object, assuntoPersistenceMock.Object);
+            var livroService = new LivroService(_basicPersistenceMock.Object, livroPersistenceMock.Object, autorPersistenceMock.Object, assuntoPersistenceMock.Object, _precoPersistenceMock.Object);
 
             // act
             var exception = await Record.ExceptionAsync(() => livroService.Update(livroDTO));
@@ -333,7 +337,7 @@ namespace CadastroLivros.Test.Services
         public async Task Delete_Invalid_CodL_Must_Throw_CadastroLivrosBadRequestException()
         {
             // arrange
-            var livroService = new LivroService(_livroPersistenceMock.Object, _autorPersistenceMock.Object, _assuntoPersistenceMock.Object);
+            var livroService = new LivroService(_basicPersistenceMock.Object, _livroPersistenceMock.Object, _autorPersistenceMock.Object, _assuntoPersistenceMock.Object, _precoPersistenceMock.Object);
 
             // act
             var act = () => livroService.Delete(-1);
@@ -349,7 +353,7 @@ namespace CadastroLivros.Test.Services
             var livroPersistenceMock = new Mock<ILivroPersistence>();
             livroPersistenceMock.Setup(a => a.Delete(It.IsAny<int>())).ReturnsAsync(false);
 
-            var livroService = new LivroService(livroPersistenceMock.Object, _autorPersistenceMock.Object, _assuntoPersistenceMock.Object);
+            var livroService = new LivroService(_basicPersistenceMock.Object, livroPersistenceMock.Object, _autorPersistenceMock.Object, _assuntoPersistenceMock.Object, _precoPersistenceMock.Object);
 
             // act
             var act = () => livroService.Delete(1);
@@ -365,7 +369,7 @@ namespace CadastroLivros.Test.Services
             var livroPersistenceMock = new Mock<ILivroPersistence>();
             livroPersistenceMock.Setup(a => a.Delete(It.IsAny<int>())).ReturnsAsync(true);
 
-            var livroService = new LivroService(livroPersistenceMock.Object, _autorPersistenceMock.Object, _assuntoPersistenceMock.Object);
+            var livroService = new LivroService(_basicPersistenceMock.Object, livroPersistenceMock.Object, _autorPersistenceMock.Object, _assuntoPersistenceMock.Object, _precoPersistenceMock.Object);
 
             // act
             var exception = await Record.ExceptionAsync(() => livroService.Delete(1));

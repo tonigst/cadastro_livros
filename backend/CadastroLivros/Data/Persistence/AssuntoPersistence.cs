@@ -16,7 +16,7 @@ namespace CadastroLivros.Data.Persistence
             _basicPersistence = basicPersistence;
         }
 
-        public async Task<Assunto?> Read(int codAs)
+        public async Task<Assunto?> Read(long codAs)
         {
             Assunto? assunto = null;
 
@@ -37,9 +37,18 @@ namespace CadastroLivros.Data.Persistence
             return assunto;
         }
 
+        public async Task<bool> Exists(long codAs)
+        {
+            var result = await _basicPersistence.ExecuteScalarAsync<long?>(
+            "SELECT Count(CodAs) FROM Assunto WHERE CodAs = $CodAs",
+            ("$CodAs", codAs));
+
+            return result == 1;
+        }
+
         public async Task<Assunto> Insert(Assunto assunto)
         {
-            var newId = await _basicPersistence.ExecuteScalarAsync<int?>(
+            var newId = await _basicPersistence.ExecuteScalarAsync<long?>(
                 @"INSERT INTO Assunto (Descricao) VALUES ($Descricao); 
                 SELECT last_insert_rowid();",
                 ("$Descricao", assunto.Descricao)
@@ -63,7 +72,7 @@ namespace CadastroLivros.Data.Persistence
             return result == 1;
         }
 
-        public async Task<bool> Delete(int codAs)
+        public async Task<bool> Delete(long codAs)
         {
             var result = await _basicPersistence.ExecuteNonQueryAsync(
                 "DELETE FROM Assunto WHERE CodAs = $CodAs",
@@ -111,21 +120,21 @@ namespace CadastroLivros.Data.Persistence
             return list;
         }
 
-        public async Task<IEnumerable<Assunto>> ReadListFromLivro(int codL)
+        public async Task<IEnumerable<Assunto>> ReadListFromLivro(long codL)
         {
             List<Assunto> list = null;
 
             await _basicPersistence.ExecuteReaderAsync(async (reader) =>
                 list = await ReadListFromDataAdapter(reader),
 
-            @"SELECT CodAs, Nome FROM Assunto AT 
+            @"SELECT CodAs, Descricao FROM Assunto AT 
                 INNER JOIN Livro_Assunto LA on LA.Assunto_CodAs = AT.CodAs and LA.Livro_CodL = $CodL",
             ("$CodL", codL));
 
             return list;
         }
 
-        public async Task<bool> InsertOrUpdateFromLivro(int codL, IEnumerable<Assunto> assuntos)
+        public async Task<bool> UpdateRelationshipWithLivro(long codL, IEnumerable<Assunto> assuntos)
         {
             await _basicPersistence.ExecuteNonQueryAsync(
                    "DELETE FROM Livro_Assunto WHERE Livro_CodL = $CodL",
@@ -135,6 +144,9 @@ namespace CadastroLivros.Data.Persistence
             int result = 0;
             foreach (var assunto in assuntos)
             {
+                if (assunto.CodAs <= 0)    // criar novo assunto antes de associar
+                    await Insert(assunto); // vai atualizar ID
+
                 result += await _basicPersistence.ExecuteNonQueryAsync(
                     "INSERT INTO Livro_Assunto (Livro_CodL, Assunto_CodAs) VALUES ($CodL, $CodAs)",
                     ("$CodL", codL),

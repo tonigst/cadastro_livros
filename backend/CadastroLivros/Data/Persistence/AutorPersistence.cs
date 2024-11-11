@@ -15,7 +15,7 @@ namespace CadastroLivros.Data.Persistence
             _basicPersistence = basicPersistence;
         }
 
-        public async Task<Autor?> Read(int codAu)
+        public async Task<Autor?> Read(long codAu)
         {
             Autor? autor = null;
 
@@ -36,9 +36,18 @@ namespace CadastroLivros.Data.Persistence
             return autor;
         }
 
+        public async Task<bool> Exists(long codAu)
+        {
+            var result = await _basicPersistence.ExecuteScalarAsync<long?>(
+            "SELECT Count(CodAu) FROM Autor WHERE CodAu = $CodAu",
+            ("$CodAu", codAu));
+
+            return result == 1;
+        }
+
         public async Task<Autor> Insert(Autor autor)
         {
-            var newId = await _basicPersistence.ExecuteScalarAsync<int?>(
+            var newId = await _basicPersistence.ExecuteScalarAsync<long?>(
                 @"INSERT INTO Autor (Nome) VALUES ($Nome); 
                 SELECT last_insert_rowid();",
                 ("$Nome", autor.Nome)
@@ -62,7 +71,7 @@ namespace CadastroLivros.Data.Persistence
             return result == 1;
         }
 
-        public async Task<bool> Delete(int codAu)
+        public async Task<bool> Delete(long codAu)
         {
             var result = await _basicPersistence.ExecuteNonQueryAsync(
                 "DELETE FROM Autor WHERE CodAu = $CodAu",
@@ -109,7 +118,7 @@ namespace CadastroLivros.Data.Persistence
             return list;
         }
 
-        public async Task<IEnumerable<Autor>> ReadListFromLivro(int codL)
+        public async Task<IEnumerable<Autor>> ReadListFromLivro(long codL)
         {
             List<Autor> list = null;
 
@@ -123,7 +132,7 @@ namespace CadastroLivros.Data.Persistence
             return list;
         }
 
-        public async Task<bool> InsertOrUpdateFromLivro(int codL, IEnumerable<Autor> autores)
+        public async Task<bool> UpdateRelationshipWithLivro(long codL, IEnumerable<Autor> autores)
         {
             await _basicPersistence.ExecuteNonQueryAsync(
                    "DELETE FROM Livro_Autor WHERE Livro_CodL = $CodL",
@@ -133,6 +142,9 @@ namespace CadastroLivros.Data.Persistence
             int result = 0;
             foreach (var autor in autores)
             {
+                if (autor.CodAu <= 0)    // criar novo autor antes de associar
+                    await Insert(autor); // vai atualizar ID
+
                 result += await _basicPersistence.ExecuteNonQueryAsync(
                     "INSERT INTO Livro_Autor (Livro_CodL, Autor_CodAu) VALUES ($CodL, $CodAu)",
                     ("$CodL", codL),

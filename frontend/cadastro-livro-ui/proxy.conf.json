@@ -1,0 +1,8 @@
+{
+    "Livro/*": {
+      "target": "http://localhost:5163/",
+      "secure": false,
+      "logLevel": "debug",
+      "changeOrigin": true
+    }    
+  }

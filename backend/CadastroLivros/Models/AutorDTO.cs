@@ -2,9 +2,7 @@
 {
     public class AutorDTO
     {
-        public int CodAu { get; set; }
-        public string Nome { get; set; }
-
-        public IEnumerable<LivroDTO> Livro { get; set; }
+        public long? CodAu { get; set; }  // Insert:ignorado    UpdateRelationshipWithLivro: null ou <= 0 cria novo autor com Nome
+        public string? Nome { get; set; } // UpdateRelationshipWithLivro: ignorado se CodAu >= 1 
     }
 }
