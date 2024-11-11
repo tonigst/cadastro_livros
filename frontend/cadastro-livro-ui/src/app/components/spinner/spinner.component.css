@@ -1,0 +1,20 @@
+.spinner {
+    border: 10px solid #f3f3f3;      /* bordas brancas */
+    border-top: 10px solid #3498db;  /* borda top azul, ou seja, 1 das 4 bordas azul */
+    border-radius: 50%;                /* transforma quadrado das bordas em circulo */
+    width: 50px;
+    height: 50px;
+    animation: spin 1.5s linear infinite;
+    -webkit-animation: spin 1.5s linear infinite; /* Safari */    
+}
+
+@keyframes spin {
+    0%   {transform: rotate(0deg);}
+    100% {transform: rotate(360deg);}
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+    0%   {-webkit-transform: rotate(0deg);}
+    100% {-webkit-transform: rotate(360deg);}
+}

@@ -21,7 +21,7 @@ namespace CadastroLivros.Data.Mapping
         {
             return new Livro()
             {
-                CodL = livroDTO.CodL,
+                CodL = livroDTO.CodL ?? -1,
                 Titulo = livroDTO.Titulo,
                 Edicao = livroDTO.Edicao,
                 Editora = livroDTO.Editora,

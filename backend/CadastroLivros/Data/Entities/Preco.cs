@@ -2,9 +2,10 @@
 {
     public class Preco
     {
-        public int CodP { get; set; }
-        public int CodL { get; set; }
-        public int CodFC { get; set; }
+        public long CodP { get; set; }
+        public long CodL { get; set; }
+        public long CodFC { get; set; }
+        public string FormaCompra { get; set; }
         public decimal Valor { get; set; }
     }
 }

@@ -2,7 +2,7 @@
 {
     public class FormaCompra
     {
-        public int CodFC { get; set; }
+        public long CodFC { get; set; }
         public string Descricao { get; set; }
     }
 }

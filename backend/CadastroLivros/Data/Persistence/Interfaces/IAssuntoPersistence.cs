@@ -4,12 +4,13 @@ namespace CadastroLivros.Data.Persistence.Interfaces
 {
     public interface IAssuntoPersistence
     {
-        Task<Assunto?> Read(int codAs);
+        Task<Assunto?> Read(long codAs);
+        Task<bool> Exists(long codAs);
         Task<Assunto> Insert(Assunto assunto); // vai atualizar entidade com o novo ID adicionado
         Task<bool> Update(Assunto assunto);
-        Task<bool> Delete(int codAs); // deleta também relacionamentos Livro_Assunto
+        Task<bool> Delete(long codAs); // deleta também relacionamentos Livro_Assunto
         Task<IEnumerable<Assunto>> ReadList(int offset = 0, int limit = 40);
-        Task<IEnumerable<Assunto>> ReadListFromLivro(int codL);
-        Task<bool> InsertOrUpdateFromLivro(int codL, IEnumerable<Assunto> assuntos);
+        Task<IEnumerable<Assunto>> ReadListFromLivro(long codL);
+        Task<bool> UpdateRelationshipWithLivro(long codL, IEnumerable<Assunto> assuntos);
     }
 }

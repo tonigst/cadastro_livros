@@ -18,7 +18,7 @@ namespace CadastroLivros.Data.Mapping
         {
             return new Assunto()
             {
-                CodAs = assuntoDTO.CodAs,
+                CodAs = assuntoDTO.CodAs ?? -1,
                 Descricao = assuntoDTO.Descricao,
             };
         }

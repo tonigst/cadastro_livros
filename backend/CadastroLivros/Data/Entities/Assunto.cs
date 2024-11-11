@@ -2,7 +2,7 @@
 {
     public class Assunto
     {
-        public int CodAs { get; set; }
+        public long CodAs { get; set; }
         public string Descricao { get; set; }
     }
 }

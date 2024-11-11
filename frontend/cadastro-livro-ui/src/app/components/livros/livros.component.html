@@ -1,0 +1,44 @@
+<div>
+    <table>
+        <thead>
+            <tr>
+                <th class="thCodigo">Código</th>
+                <th class="thTitulo">Título</th>
+                <th class="thEditora">Editora</th>
+                <th class="thEdicao">Edição</th>
+                <th class="thAno">Ano</th>
+                <th class="thDelete"></th>
+            </tr>
+        </thead>
+
+        <tbody>
+            <tr *ngFor="let livro of livros">
+                <td>
+                    <a href="editarlivro">{{livro.codL}}</a>
+                </td>
+                <td>
+                    <a href="editarlivro">{{livro.titulo}}</a>
+                </td>
+                <td>
+                    <a href="editarlivro">{{livro.editora}}</a>
+                </td>
+                <td>
+                    <a href="editarlivro">{{livro.edicao}}</a>
+                </td>
+                <td>
+                    <a href="editarlivro">{{livro.anoPublicacao}}</a>
+                </td>
+                <td>
+                    <button (click)="edit(livro)">Editar</button>
+                    <button (click)="delete(livro)">Excluir</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div>
+
+    </div>
+</div>
+
+<!-- <app-spinner [showSpinner]=showSpinner></app-spinner> -->

@@ -1,4 +1,5 @@
 ﻿using CadastroLivros.Data.Entities;
+using CadastroLivros.Data.Mapping;
 using CadastroLivros.Data.Persistence.Interfaces;
 using CadastroLivros.Exceptions;
 using System.Data.Common;
@@ -9,13 +10,21 @@ namespace CadastroLivros.Data.Persistence
     public class PrecoPersistence : IPrecoPersistence
     {
         private readonly IBasicPersistence _basicPersistence;
+        private readonly IFormaCompraPersistence _formaCompraPersistence;
 
-        public PrecoPersistence(IBasicPersistence basicPersistence)
+        private const string _baseSelectQuery = 
+            @"SELECT P.CodP, P.CodL, P.CodFC, FC.Descricao, P.Valor 
+              FROM Preco P 
+              LEFT JOIN FormaCompra FC on FC.CodFC = P.CodFC ";
+
+
+        public PrecoPersistence(IBasicPersistence basicPersistence, IFormaCompraPersistence formaCompraPersistence)
         {
             _basicPersistence = basicPersistence;
+            _formaCompraPersistence = formaCompraPersistence;
         }
 
-        public async Task<Preco?> Read(int codP)
+        public async Task<Preco?> Read(long codP)
         {
             Preco? preco = null;
 
@@ -25,22 +34,44 @@ namespace CadastroLivros.Data.Persistence
                 {
                     var preco = new Preco()
                     {
-                        CodP = codP,
-                        CodL = reader.GetInt32(0),
-                        CodFC = reader.GetInt32(1),
-                        Valor = reader.GetDecimal(2),
+                        CodP = reader.GetInt32(0),
+                        CodL = reader.GetInt32(1),
+                        CodFC = reader.GetInt32(2),
+                        FormaCompra = reader.GetString(3),
+                        Valor = reader.GetDecimal(4),
                     };
                 }
             },
-            "SELECT CodL, CodFC, Valor FROM Preco WHERE CodP = $CodP",
+            _baseSelectQuery + " WHERE CodP = $CodP",
             ("$CodP", codP));
 
             return preco;
         }
 
+        public async Task<bool> Exists(long codP)
+        {
+            var result = await _basicPersistence.ExecuteScalarAsync<long?>(
+            "SELECT Count(CodP) FROM Preco WHERE CodP = $CodP",
+            ("$CodP", codP));
+
+            return result == 1;
+        }
+
         public async Task<Preco> Insert(Preco preco)
         {
-            var newId = await _basicPersistence.ExecuteScalarAsync<int?>(
+            var formaCompra = PrecoMapping.ToFormaCompra(preco);
+
+            if (preco.CodFC <= 0 && preco.FormaCompra == null)
+                throw new CadastroLivrosBadRequestException("Erro ao inserir preço. FormaCompra ou CodFC precisam ser informados.");
+
+            if (preco.CodFC <= 0)                                         // criar nova formaCompra antes inserir preco
+                await _formaCompraPersistence.Insert(formaCompra);        // vai atualizar ID
+            else if (!await _formaCompraPersistence.Exists(preco.CodFC))  // verificar se formaCompra CodFC realmente existe
+                throw new CadastroLivrosDataBaseException($"Erro ao inserir preço. FormaCompra {preco.CodFC} não encontrada no banco de dados.");
+
+            preco.CodFC = formaCompra.CodFC;
+
+            var newId = await _basicPersistence.ExecuteScalarAsync<long?>(
                 @"INSERT INTO Preco (CodL, CodFC, Valor) VALUES ($CodL, $CodFC, $Valor); 
                 SELECT last_insert_rowid();",
                 ("$CodL", preco.CodL),
@@ -68,7 +99,7 @@ namespace CadastroLivros.Data.Persistence
             return result == 1;
         }
 
-        public async Task<bool> Delete(int codP)
+        public async Task<bool> Delete(long codP)
         {
             var result = await _basicPersistence.ExecuteNonQueryAsync(
                 "DELETE FROM Preco WHERE CodP = $CodP",
@@ -89,7 +120,8 @@ namespace CadastroLivros.Data.Persistence
                     CodP = reader.GetInt32(0),
                     CodL = reader.GetInt32(1),
                     CodFC = reader.GetInt32(2),
-                    Valor = reader.GetDecimal(3),
+                    FormaCompra = reader.GetString(3),
+                    Valor = reader.GetDecimal(4),
                 };
                 list.Add(preco);
             }
@@ -105,52 +137,40 @@ namespace CadastroLivros.Data.Persistence
             {
                 list = await ReadListFromDataAdapter(reader);
             },
-            "SELECT CodP, CodL, CodFC, Valor FROM Preco LIMIT $Limit OFFSET $Offset",
+            _baseSelectQuery + " LIMIT $Limit OFFSET $Offset",
             ("$Limit", limit),
             ("$Offset", offset));
 
             return list;
         }
 
-        public async Task<IEnumerable<Preco>> ReadListFromLivro(int codL)
+        public async Task<IEnumerable<Preco>> ReadListFromLivro(long codL)
         {
             List<Preco> list = null;
 
             await _basicPersistence.ExecuteReaderAsync(async (reader) =>
                 list = await ReadListFromDataAdapter(reader),
 
-            @"SELECT CodP, CodL, CodFC, Valor FROM Preco WHERE CodL = $CodL",
+            _baseSelectQuery + " WHERE CodL = $CodL",
             ("$CodL", codL));
 
             return list;
         }
 
-        public async Task<IEnumerable<Preco>> InsertOrUpdateFromLivro(int codL, IEnumerable<Preco> precos)
+        public async Task<IEnumerable<Preco>> UpdateRelationshipWithLivro(long codL, IEnumerable<Preco> precos)
         {
             if (precos.Any(a => a.CodL != codL))
                 throw new CadastroLivrosBadRequestException("Dados inválidos na inserção/atualização de preços do livro.");
 
+            // deletar precos do livro
             await _basicPersistence.ExecuteNonQueryAsync(
-                   "DELETE FROM Preco WHERE Livro_CodL = $CodL",
-                   ("$CodL", codL)
-               );
+                "DELETE FROM Preco WHERE CodL = $CodL",
+                ("$CodL", codL)
+            );
 
-            int result = 0;
+            // (re)criar precos do livro 
             foreach (var preco in precos)
-            {
-                var newId = await _basicPersistence.ExecuteScalarAsync<int?>(
-                    @"INSERT INTO Preco (CodL, CodFC, Valor) VALUES ($CodL, $CodFC, $Valor); 
-                    SELECT last_insert_rowid();",
-                    ("$CodL", preco.CodL),
-                    ("$CodFC", preco.CodFC),
-                    ("$Valor", preco.Valor)
-                );
-
-                if (newId == null)
-                    throw new CadastroLivrosDataBaseException("Erro ao inserir preco");
-
-                preco.CodP = newId.Value;
-            }
+                await Insert(preco);
 
             return precos;
         }
